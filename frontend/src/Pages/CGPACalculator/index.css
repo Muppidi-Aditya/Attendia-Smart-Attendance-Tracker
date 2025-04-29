@@ -1,0 +1,141 @@
+.credit-grade-block {
+    height: 60px;
+    width: 90%;
+    margin-top: 15px;
+    align-self: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.credit-grade-block input,
+.credit-grade-block select {
+    height: 100%;
+    flex-grow: 1;
+    border-radius: 10px;
+    background: rgba(51, 175, 224, 0.099);
+    backdrop-filter: blur(7.5px);
+    -webkit-backdrop-filter: blur(7.5px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding-left: 10px;
+    font-family: "Poppins", sans-serif;
+    outline: none;
+}
+
+/* Placeholder styling */
+.credit-grade-block input::placeholder {
+    color: #33AFE0; /* Light blue color that matches your theme */
+}
+
+/* Vendor prefixes for better browser compatibility */
+.credit-grade-block input::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+    color: #33AFE0;
+}
+.credit-grade-block input::-moz-placeholder { /* Firefox 19+ */
+    color: #33AFE0;
+    opacity: 1; /* Firefox sets opacity by default */
+}
+.credit-grade-block input:-ms-input-placeholder { /* IE 10+ */
+    color: #33AFE0;
+}
+.credit-grade-block input:-moz-placeholder { /* Firefox 18- */
+    color: #33AFE0;
+}
+
+/* Select styling to match input */
+.credit-grade-block select {
+    color: #33AFE0;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='%2333AFE0' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+
+.add-course-btn {
+    height: 60px;
+    width: 90%;
+    align-self: center;
+    margin-top: 15px;
+    font-family: "Poppins", sans-serif;
+    font-size: 16px;
+    background-color: #33AFE0;
+    color: white;
+    border-style: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.cgpa-hr-line {
+    border-width: 1px;
+    border-style: solid;
+    color: white;
+    border-radius: 5px;
+    width: 90%;
+    align-self: center;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.cgpa-submit-btn {
+    height: 60px;
+    width: 90%;
+    align-self: center;
+    font-size: 16px;
+    color: #33AFE0;
+    font-family: "Poppins", sans-serif;
+    font-size: 16px;
+    border-radius: 10px;
+    border-style: none;
+    cursor: pointer;
+}
+
+.course-row {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-course-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 89, 89, 0.8);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    margin-left: 5px;
+}
+
+.cgpa-result {
+    width: 90%;
+    margin-top: 15px;
+    padding: 15px 0;
+    align-self: center;
+    text-align: center;
+    background: rgba(51, 175, 224, 0.099);
+    backdrop-filter: blur(7.5px);
+    -webkit-backdrop-filter: blur(7.5px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+}
+
+.cgpa-result p {
+    margin: 0;
+    font-family: "Poppins", sans-serif;
+    font-size: 16px;
+}
+
+.cgpa-result span {
+    font-weight: 600;
+    color: #33AFE0;
+    font-size: 20px;
+}

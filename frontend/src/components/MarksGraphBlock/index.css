@@ -1,0 +1,44 @@
+.marks-block {
+    background: rgba(51, 175, 224, 0.099);
+    backdrop-filter: blur( 7.5px );
+    -webkit-backdrop-filter: blur( 7.5px );
+    border: 1px solid rgba( 255, 255, 255, 0.18 );
+    border-radius: 15px;
+    margin-top: 20px;
+}
+
+.marks-data {
+    min-height: 50px;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.marks-div {
+    height: 40px;
+    width: 100px;
+    font-size: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 10px;
+    margin-bottom: 10px;
+    margin-top: 0;
+    border-radius: 20px;
+    font-family: "Poppins", sans-serif;
+    background-color: rgb(54 171 255 / 25%);
+    color: #ffffffd6;
+}
+
+.marks-outer-block {
+    /* border-style: solid; */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.marks-outer-block p {
+    font-size: 20px;
+    margin-bottom: 5px;
+}

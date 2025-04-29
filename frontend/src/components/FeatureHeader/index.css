@@ -1,0 +1,12 @@
+.feature-header-block {
+    height: 100px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 15px;
+    padding-right: 25px;
+    font-size: 3vw;
+    font-family: font-a;
+    color: white;
+}

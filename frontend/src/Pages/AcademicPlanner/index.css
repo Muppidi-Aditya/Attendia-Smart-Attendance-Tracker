@@ -1,0 +1,15 @@
+.planner-header {
+    height: 90px;
+    width: 100%;
+    border-style: solid;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding-left: 10px;
+    border-radius: 10px;
+    margin-top: 15px;
+    background: rgba(51, 175, 224, 0.099);
+    backdrop-filter: blur( 7.5px );
+    -webkit-backdrop-filter: blur( 7.5px );
+    border: 1px solid rgba( 255, 255, 255, 0.18 );
+}

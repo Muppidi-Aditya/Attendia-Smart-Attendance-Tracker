@@ -1,0 +1,36 @@
+{
+  "name": "server-side",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@mongodb-js/zstd": "^2.0.1",
+    "axios": "^1.8.3",
+    "axios-cookiejar-support": "^5.0.5",
+    "body-parser": "^1.20.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0",
+    "node-fetch": "^3.3.2",
+    "node-zstandard": "^1.2.4",
+    "puppeteer": "^24.4.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "tough-cookie": "^5.1.2",
+    "validator": "^13.12.0",
+    "winston": "^3.17.0",
+    "zstd-codec": "^0.1.5",
+    "zstd-napi": "^0.0.10",
+    "zstd-wasm": "^0.0.9"
+  },
+  "keywords": []
+}
