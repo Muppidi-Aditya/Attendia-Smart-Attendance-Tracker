@@ -310,6 +310,15 @@ app.get('/api/planner', async (req, res) => {
   }
 });
 
+app.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    message: 'Attendia API server is running',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
