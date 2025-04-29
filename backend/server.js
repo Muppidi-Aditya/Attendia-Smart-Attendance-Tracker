@@ -5,10 +5,27 @@ const cors = require('cors');
 const app = express();
 const port = 3000;
 
-// Middleware to parse JSON bodies and enable CORS
+// Update the allowed origins to include both local development and production URLs
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://attendia-smart-attendance-tracker.vercel.app'
+];
+
+// Middleware to parse JSON bodies and enable CORS with multiple origins
 app.use(express.json());
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin is allowed
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log(`Origin ${origin} not allowed by CORS`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'Cache-Control', 'Pragma', 'Expires']
@@ -322,5 +339,5 @@ app.get('/', (req, res) => {
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
-  console.log(`CORS enabled for origin: http://localhost:5173`);
+  console.log(`CORS enabled for origins: ${allowedOrigins.join(', ')}`);
 });
