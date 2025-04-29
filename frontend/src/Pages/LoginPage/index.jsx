@@ -20,6 +20,7 @@ class LoginPage extends Component {
         // Clear any existing cookies to prevent conflicts
         // Uncomment if you want to force logout on login page visit
         // this.clearAllCookies();
+        console.log(import.meta.env.VITE_REACT_APP_BACKEND_BASEURL)
     }
 
     clearAllCookies = () => {
@@ -65,6 +66,7 @@ class LoginPage extends Component {
             // Step 1: Login to get the authentication token
             console.log(`Sending login request for user: ${username}`);
             const loginUrl = `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/login`;
+            console.log(loginUrl)
             const loginResponse = await axios.post(loginUrl, {
                 username,
                 password
