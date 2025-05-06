@@ -1,22 +1,58 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './index.css';
 import { PiDotsThreeOutlineVertical } from "react-icons/pi";
 import { TbLogout2 } from "react-icons/tb";
 import { FaFileDownload } from "react-icons/fa";
 import { IoShareSocialOutline } from "react-icons/io5";
+import { MdInstallMobile } from "react-icons/md";
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
-// Import jsPDF
 import jsPDF from 'jspdf';
-// Import html2canvas for the HTML-to-PDF approach
 import html2canvas from 'html2canvas';
 
 const LowerMenuBlock = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [isOffline, setIsOffline] = useState(false);
+    const [deferredPrompt, setDeferredPrompt] = useState(null);
     const navigate = useNavigate();
+
+    // Handle PWA install prompt
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e) => {
+            // Prevent the default mini-infobar from appearing
+            e.preventDefault();
+            // Store the event for later use
+            setDeferredPrompt(e);
+        };
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
+    }, []);
+
+    const handleInstallApp = () => {
+        setIsOpen(false);
+        if (deferredPrompt) {
+            // Show the install prompt
+            deferredPrompt.prompt();
+            // Wait for the user to respond to the prompt
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                setDeferredPrompt(null);
+            });
+        } else {
+            alert('App installation is not available. Try accessing this site from a compatible browser (e.g., Chrome or Safari) and ensure you are on a secure connection.');
+        }
+    };
 
     const toggleMenu = () => {
         setIsOpen(!isOpen);
@@ -33,9 +69,19 @@ const LowerMenuBlock = () => {
         
         setIsLoading(true);
         setError(null);
-        
+        setIsOffline(false);
+
+        const cachedData = localStorage.getItem('studentData');
+        if (cachedData && !navigator.onLine) {
+            const studentInfo = JSON.parse(cachedData);
+            setIsOffline(true);
+            generatePDF(studentInfo);
+            setIsLoading(false);
+            alert('Generated PDF using cached data (offline mode).');
+            return;
+        }
+
         try {
-            // Use the new API endpoint to get user data
             const userUrl = `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/user`;
             
             const response = await axios.get(userUrl, {
@@ -49,11 +95,23 @@ const LowerMenuBlock = () => {
             
             const studentInfo = response.data.userInfo;
             
-            // Generate and download PDF immediately
+            localStorage.setItem('studentData', JSON.stringify(studentInfo));
+            
             generatePDF(studentInfo);
             
         } catch (error) {
             console.error('Failed to fetch user data:', error);
+            const cachedData = localStorage.getItem('studentData');
+            
+            if (cachedData) {
+                const studentInfo = JSON.parse(cachedData);
+                setIsOffline(true);
+                generatePDF(studentInfo);
+                setIsLoading(false);
+                alert('Network error. Generated PDF using cached data.');
+                return;
+            }
+
             let errorMessage = 'Failed to fetch data. Please try again.';
             
             if (error.response) {
@@ -71,16 +129,14 @@ const LowerMenuBlock = () => {
 
     const generatePDF = (studentData) => {
         try {
-            // Create an element to render the report
             const reportContainer = document.createElement('div');
             reportContainer.id = 'student-report-container';
             reportContainer.style.padding = '20px';
             reportContainer.style.fontFamily = 'Arial, sans-serif';
             reportContainer.style.position = 'absolute';
             reportContainer.style.left = '-9999px';
-            reportContainer.style.width = '800px'; // Set a fixed width for better rendering
+            reportContainer.style.width = '800px';
             
-            // Add content to the report
             reportContainer.innerHTML = `
                 <h1 style="text-align: center; color: #33AFE0;">Student Information Report</h1>
                 <div style="margin-bottom: 20px;">
@@ -151,35 +207,29 @@ const LowerMenuBlock = () => {
                 </table>
                 
                 <div style="margin-top: 30px; font-size: 10px; text-align: center; color: #666;">
-                    <p>Generated on ${new Date().toLocaleString()} via ATTENDIA</p>
+                    <p>Generated on ${new Date().toLocaleString()} via ATTENDIA${isOffline ? ' (Offline Mode)' : ''}</p>
                 </div>
             `;
             
-            // Add the element to the document
             document.body.appendChild(reportContainer);
             
-            // Use html2canvas to render the report as an image
             html2canvas(reportContainer, { 
                 scale: 1.5,
                 logging: false,
                 useCORS: true,
                 allowTaint: true
             }).then(canvas => {
-                // Create a new PDF
                 const pdf = new jsPDF('p', 'mm', 'a4');
                 
-                // The width and height of the canvas as the PDF page size
-                const imgWidth = 210; // A4 width in mm
-                const pageHeight = 297; // A4 height in mm
+                const imgWidth = 210;
+                const pageHeight = 297;
                 const imgHeight = canvas.height * imgWidth / canvas.width;
                 let heightLeft = imgHeight;
                 let position = 0;
                 
-                // Add first page
                 pdf.addImage(canvas, 'PNG', 0, position, imgWidth, imgHeight);
                 heightLeft -= pageHeight;
                 
-                // Add more pages if needed
                 while (heightLeft > 0) {
                     position = heightLeft - imgHeight;
                     pdf.addPage();
@@ -187,17 +237,14 @@ const LowerMenuBlock = () => {
                     heightLeft -= pageHeight;
                 }
                 
-                // Download the PDF
                 const studentName = studentData.name ? studentData.name.replace(/\s+/g, '_') : 'Student';
                 const fileName = `${studentName}_Academic_Report.pdf`;
                 pdf.save(fileName);
                 
-                // Remove the temporary element
                 document.body.removeChild(reportContainer);
             }).catch(err => {
                 console.error('Error creating PDF from canvas:', err);
                 alert('Failed to generate PDF: ' + err.message);
-                // Remove the temporary element
                 document.body.removeChild(reportContainer);
             });
             
@@ -207,33 +254,25 @@ const LowerMenuBlock = () => {
         }
     };
     
-    // Function to handle logout
     const handleLogout = () => {
-        // Close the menu
         setIsOpen(false);
         
-        // Clear all cookies
         Cookies.remove('username');
         Cookies.remove('password');
         Cookies.remove('token');
         Cookies.remove('displayName');
         
-        // Additional cookies that might exist
         Cookies.remove('_iamadt_client_10002227248');
         Cookies.remove('_iambdt_client_10002227248');
         Cookies.remove('wms-tkp-token_client_10002227248');
         Cookies.remove('_z_identity');
         
-        // Navigate to login page
         navigate('/login');
     };
 
-    // Function to handle sharing
     const handleShare = () => {
-        // Close the menu
         setIsOpen(false);
         
-        // Check if Web Share API is supported
         if (navigator.share) {
             navigator.share({
                 title: 'ATTENDIA',
@@ -243,17 +282,14 @@ const LowerMenuBlock = () => {
             .then(() => console.log('Successful share'))
             .catch((error) => console.log('Error sharing:', error));
         } else {
-            // Fallback for browsers that don't support the Web Share API
             const shareUrl = encodeURIComponent(window.location.origin);
             const shareText = encodeURIComponent('Check out ATTENDIA for tracking your academic progress!');
             
-            // Create options for different platforms
             const whatsappUrl = `https://wa.me/?text=${shareText}%20${shareUrl}`;
             const twitterUrl = `https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`;
             const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
             const emailUrl = `mailto:?subject=ATTENDIA&body=${shareText}%20${shareUrl}`;
             
-            // Create a modal for sharing options
             const shareOptions = document.createElement('div');
             shareOptions.className = 'share-options-modal';
             shareOptions.innerHTML = `
@@ -269,7 +305,6 @@ const LowerMenuBlock = () => {
                 </div>
             `;
             
-            // Add styles to the modal
             const modalStyle = document.createElement('style');
             modalStyle.textContent = `
                 .share-options-modal {
@@ -323,11 +358,9 @@ const LowerMenuBlock = () => {
                 }
             `;
             
-            // Add the modal and style to the document
             document.body.appendChild(modalStyle);
             document.body.appendChild(shareOptions);
             
-            // Add close functionality
             const closeButton = shareOptions.querySelector('.close-share-modal');
             closeButton.addEventListener('click', () => {
                 document.body.removeChild(shareOptions);
@@ -340,29 +373,22 @@ const LowerMenuBlock = () => {
         <div className='lower-menu-container'>
             <div className={`menu-transform-block ${isOpen ? 'open' : ''}`}>
                 <div onClick={handleLogout} style={{ cursor: 'pointer' }}>
-                    <TbLogout2 style={{
-                        fontSize: '25px'
-                    }} />
-                    <p style={{
-                        fontFamily: '"Poppins", sans-serif'
-                    }}> Logout </p>
+                    <TbLogout2 style={{ fontSize: '25px' }} />
+                    <p style={{ fontFamily: '"Poppins", sans-serif' }}> Logout </p>
                 </div>
                 <div onClick={handleGetPDF} style={{ cursor: 'pointer' }}>
-                    <FaFileDownload style={{
-                        fontSize: '25px'
-                    }} />
-                    <p style={{
-                        fontFamily: '"Poppins", sans-serif',
-                        textAlign: 'center'
-                    }}>{isLoading ? 'Generating PDF...' : 'Download Report'}</p>
+                    <FaFileDownload style={{ fontSize: '25px' }} />
+                    <p style={{ fontFamily: '"Poppins", sans-serif', textAlign: 'center' }}>
+                        {isLoading ? 'Generating PDF...' : 'Download Report'}
+                    </p>
                 </div>
                 <div onClick={handleShare} style={{ cursor: 'pointer' }}>
-                    <IoShareSocialOutline style={{
-                        fontSize: '25px'
-                    }} />
-                    <p style={{
-                        fontFamily: '"Poppins", sans-serif'
-                    }}> Share App </p>
+                    <IoShareSocialOutline style={{ fontSize: '25px' }} />
+                    <p style={{ fontFamily: '"Poppins", sans-serif' }}> Share App </p>
+                </div>
+                <div onClick={handleInstallApp} style={{ cursor: 'pointer' }}>
+                    <MdInstallMobile style={{ fontSize: '25px' }} />
+                    <p style={{ fontFamily: '"Poppins", sans-serif' }}> Install App </p>
                 </div>
             </div>
             <div className='lower-menu-button' onClick={toggleMenu}>
