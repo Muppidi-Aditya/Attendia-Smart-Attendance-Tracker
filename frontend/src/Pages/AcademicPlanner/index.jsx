@@ -18,6 +18,7 @@ class AcademicPlanner extends Component {
     plannerData: null, 
     loading: true,
     error: null,
+    isOffline: false
   };
 
   componentDidMount() {
@@ -26,13 +27,25 @@ class AcademicPlanner extends Component {
     const day = date.getDate();
     const month = date.getMonth();
     
-    this.setState({
-      currentMonthIndex: month,
-      currentDateIndex: day
-    }, () => {
-      // Fetch planner data after state is updated
-      this.fetchPlannerData();
-    });
+    // Check for cached data and network status
+    const cachedData = localStorage.getItem('plannerData');
+    if (cachedData && !navigator.onLine) {
+      this.setState({
+        currentMonthIndex: month,
+        currentDateIndex: day,
+        plannerData: JSON.parse(cachedData),
+        loading: false,
+        isOffline: true
+      });
+    } else {
+      this.setState({
+        currentMonthIndex: month,
+        currentDateIndex: day
+      }, () => {
+        // Fetch planner data after state is updated
+        this.fetchPlannerData();
+      });
+    }
   }
 
   // Fetch data from /api/planner
@@ -42,6 +55,8 @@ class AcademicPlanner extends Component {
       if (!token) {
         throw new Error("Authentication token not found");
       }
+
+      this.setState({ loading: true, error: null, isOffline: false });
 
       const apiUrl = `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/planner`;
 
@@ -54,6 +69,9 @@ class AcademicPlanner extends Component {
 
       console.log("Planner data retrieved:", response.data);
 
+      // Save to localStorage
+      localStorage.setItem('plannerData', JSON.stringify(response.data));
+
       this.setState({
         plannerData: response.data,
         loading: false,
@@ -61,6 +79,18 @@ class AcademicPlanner extends Component {
       });
     } catch (error) {
       console.error("Error fetching planner data:", error);
+      const cachedData = localStorage.getItem('plannerData');
+      
+      if (cachedData) {
+        this.setState({
+          plannerData: JSON.parse(cachedData),
+          loading: false,
+          isOffline: true,
+          error: "Network error. Displaying cached data."
+        });
+        return;
+      }
+
       this.setState({
         loading: false,
         error: error.response?.data?.message || error.message || "Failed to fetch planner data",
@@ -91,7 +121,7 @@ class AcademicPlanner extends Component {
   };
 
   render() {
-    const { currentMonthIndex, currentDateIndex, plannerData, loading, error } = this.state;
+    const { currentMonthIndex, currentDateIndex, plannerData, loading, error, isOffline } = this.state;
     const months = this.getMonths();
     const currentMonth = months[currentMonthIndex] || "";
 
@@ -109,7 +139,7 @@ class AcademicPlanner extends Component {
     }
 
     // Handle error state
-    if (error) {
+    if (error && !isOffline) {
       return (
         <div className="marks-page">
           <FeatureHeader />
@@ -128,6 +158,11 @@ class AcademicPlanner extends Component {
         <FeatureHeader />
         <div className="attendance-page-block">
           <p>Academic Planner</p>
+          {isOffline && (
+            <p className="offline-message" style={{ color: '#FFA500', fontStyle: 'italic' }}>
+              Displaying offline cached data
+            </p>
+          )}
           <div className="planner-header">
             <IoIosArrowDropleftCircle
               style={{
