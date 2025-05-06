@@ -9,11 +9,21 @@ class AttendancePage extends Component {
     state = {
         attendanceList: [],
         isLoading: false,
-        error: null
+        error: null,
+        isOffline: false
     }
 
     componentDidMount() {
-        this.getAttendanceDetails();
+        // Check if there's cached data and network status
+        const cachedData = localStorage.getItem('attendanceData');
+        if (cachedData && !navigator.onLine) {
+            this.setState({
+                attendanceList: JSON.parse(cachedData),
+                isOffline: true
+            });
+        } else {
+            this.getAttendanceDetails();
+        }
     }
 
     getAttendanceDetails = async () => {
@@ -24,7 +34,7 @@ class AttendancePage extends Component {
             return;
         }
 
-        this.setState({ isLoading: true, error: null });
+        this.setState({ isLoading: true, error: null, isOffline: false });
 
         try {
             // Use the new user API endpoint with the token
@@ -37,6 +47,9 @@ class AttendancePage extends Component {
 
             // Check if courses data exists in the response
             if (response.data && response.data.userInfo && response.data.userInfo.courses) {
+                // Save to localStorage
+                localStorage.setItem('attendanceData', JSON.stringify(response.data.userInfo.courses));
+                
                 this.setState({
                     attendanceList: response.data.userInfo.courses,
                     isLoading: false
@@ -49,7 +62,19 @@ class AttendancePage extends Component {
             console.error('Failed to fetch attendance data:', error);
             
             let errorMessage = 'Failed to fetch attendance data. Please try again.';
+            const cachedData = localStorage.getItem('attendanceData');
             
+            if (cachedData) {
+                // Use cached data if available
+                this.setState({
+                    attendanceList: JSON.parse(cachedData),
+                    isLoading: false,
+                    isOffline: true,
+                    error: 'Network error. Displaying cached data.'
+                });
+                return;
+            }
+
             if (error.response) {
                 errorMessage = error.response.data.error || errorMessage;
             } else if (error.message) {
@@ -64,13 +89,19 @@ class AttendancePage extends Component {
     } 
 
     render() {
-        const { attendanceList, isLoading, error } = this.state;
+        const { attendanceList, isLoading, error, isOffline } = this.state;
         
         return (
             <div className="attendance-page">
                 <FeatureHeader />
                 <div className="attendance-page-block">
                     <p> Attendance </p>
+                    
+                    {isOffline && (
+                        <p className="offline-message" style={{ color: '#FFA500', fontStyle: 'italic' }}>
+                            Displaying offline cached data
+                        </p>
+                    )}
                     
                     {isLoading && <p className="loading-message">Loading attendance data...</p>}
                     
