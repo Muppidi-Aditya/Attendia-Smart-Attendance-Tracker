@@ -5,7 +5,7 @@ import './index.css';
 import TimeTableBlock from "../../components/TimeTableBlock";
 import Cookies from 'js-cookie';
 
-// Fallback data in case API fails
+// Fallback data in case API fails and no cached data
 const sampleData = {
   day_order: "1",
   timetable: {
@@ -34,14 +34,28 @@ class TimeTable extends Component {
     timetableData: null,
     loading: true,
     error: null,
-    today: "1", // Default today value
+    today: "1",
+    isOffline: false
   };
 
   _isMounted = false;
 
   componentDidMount() {
     this._isMounted = true;
-    this.fetchTimetableData();
+    // Check for cached data and network status
+    const cachedData = localStorage.getItem('timetableData');
+    if (cachedData && !navigator.onLine) {
+      const parsedData = JSON.parse(cachedData);
+      this.setState({
+        timetableData: parsedData,
+        selectedDay: parsedData.day_order || "1",
+        today: parsedData.day_order || "1",
+        loading: false,
+        isOffline: true
+      });
+    } else {
+      this.fetchTimetableData();
+    }
   }
 
   componentWillUnmount() {
@@ -56,11 +70,10 @@ class TimeTable extends Component {
         throw new Error("Authentication token not found. Please login again.");
       }
 
+      this.setState({ loading: true, error: null, isOffline: false });
 
-      // Use environment variable or fallback to localhost
       const apiUrl = `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/timetable`;
 
-      // FIXED: Pass token as query parameter instead of in the config object
       const response = await axios.get(`${apiUrl}?token=${encodeURIComponent(token)}`, {
         withCredentials: true,
         headers: {
@@ -73,6 +86,8 @@ class TimeTable extends Component {
         console.warn("Unexpected API response format:", response.data);
         const adaptedData = this.adaptApiResponse(response.data);
         if (this._isMounted) {
+          // Save to localStorage
+          localStorage.setItem('timetableData', JSON.stringify(adaptedData));
           this.setState({
             timetableData: adaptedData,
             loading: false,
@@ -80,6 +95,8 @@ class TimeTable extends Component {
         }
       } else {
         if (this._isMounted) {
+          // Save to localStorage
+          localStorage.setItem('timetableData', JSON.stringify(response.data));
           this.setState({
             timetableData: response.data,
             selectedDay: response.data.day_order,
@@ -90,11 +107,26 @@ class TimeTable extends Component {
       }
     } catch (error) {
       console.error("Error fetching timetable:", error);
+      const cachedData = localStorage.getItem('timetableData');
+      
+      if (cachedData && this._isMounted) {
+        const parsedData = JSON.parse(cachedData);
+        this.setState({
+          timetableData: parsedData,
+          selectedDay: parsedData.day_order || "1",
+          today: parsedData.day_order || "1",
+          loading: false,
+          isOffline: true,
+          error: "Network error. Displaying cached data."
+        });
+        return;
+      }
+
       if (this._isMounted) {
         this.setState({
           error: error.message || "Failed to fetch timetable data. Please try again later.",
           loading: false,
-          timetableData: sampleData, // Use fallback data
+          timetableData: sampleData,
         });
       }
     }
@@ -185,12 +217,17 @@ class TimeTable extends Component {
   };
 
   render() {
-    const { selectedDay, today } = this.state;
+    const { selectedDay, today, isOffline } = this.state;
     return (
       <div className="marks-page">
         <FeatureHeader />
         <div className="attendance-page-block">
           <p className="timetable-title">Timetable</p>
+          {isOffline && (
+            <p className="offline-message" style={{ color: '#FFA500', fontStyle: 'italic' }}>
+              Displaying offline cached data
+            </p>
+          )}
           <div className="timetable-header">
             {[1, 2, 3, 4, 5].map((day) => (
               <div
