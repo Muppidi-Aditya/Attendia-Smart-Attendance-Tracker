@@ -5,12 +5,17 @@ import './index.css';
 const MarksGraphBlock = (props) => {
   const { marksData } = props;
   const { courseCode, courseType, courseName, tests } = marksData;
-
+  
   // Prepare chart data if tests exist
   const chartData = Object.entries(tests).map(([name, values]) => ({
     name,
     percentage: values.percentage,
   }));
+
+  // Calculate total marks
+  const totalMarks = Object.values(tests).reduce((acc, curr) => acc + curr.total, 0);
+  const totalObtained = Object.values(tests).reduce((acc, curr) => acc + curr.got, 0);
+  const percentage = totalMarks > 0 ? (totalObtained / totalMarks * 100).toFixed(2) : 0;
 
   // Check if tests object is empty
   const hasTests = Object.keys(tests).length > 0;
@@ -75,6 +80,19 @@ const MarksGraphBlock = (props) => {
       >
         {courseCode} - {courseType}
       </h1>
+      {hasTests && (
+        <h3
+          style={{
+            marginLeft: '20px',
+            marginTop: '10px',
+            color: '#333',
+            fontSize: '14px',
+            fontWeight: '500',
+          }}
+        >
+          Total Marks: {totalObtained}/{totalMarks} ({percentage}%)
+        </h3>
+      )}
 
       {hasTests ? (
         <>
@@ -134,9 +152,7 @@ const MarksGraphBlock = (props) => {
                     fill: 'white',
                   }}
                   activeDot={{
-                    stroke
-
-: '#4CAF50',
+                    stroke: '#4CAF50',
                     strokeWidth: 2,
                     r: 8,
                     fill: 'white',
